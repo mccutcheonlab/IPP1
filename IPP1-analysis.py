@@ -12,6 +12,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+## Colour scheme
+col={}
+col['np_cas'] = 'xkcd:silver'
+col['np_malt'] = 'white'
+col['lp_cas'] = 'xkcd:kelly green'
+col['lp_malt'] = 'xkcd:light green'
+
+
 class Session(object):
     
     def __init__(self, metafiledata):
@@ -33,9 +41,11 @@ class Session(object):
     def calculatelickdata(self, interpolate='none'):
         self.cas_data = jmf.lickCalc(self.cas_meddata[0],
                                     offset=self.cas_meddata[1],
+                                    burstThreshold=0.5, binsize=120,
                                     adjustforlonglicks=interpolate)
         self.malt_data = jmf.lickCalc(self.malt_meddata[0],
                                     offset=self.malt_meddata[1],
+                                    burstThreshold=0.5, binsize=120,
                                     adjustforlonglicks=interpolate)
 
 def sub2var(session, substance):
@@ -59,16 +69,61 @@ def prefhistFig(ax1, ax2, df, factor1, factor2):
     ax2.set_xticks([0,10,20,30])
     ax2.set_xticklabels(['0', '20', '40', '60'])
     
-def shadedError(ax, yarray, linecolor='black', errorcolor = 'xkcd:silver'):
-    yarray = np.array(yarray)
-    y = np.mean(yarray)
-    yerror = np.std(yarray)/np.sqrt(len(yarray))
-    x = np.arange(0, len(y))
-    ax.plot(x, y, color=linecolor)
-    ax.fill_between(x, y-yerror, y+yerror, color=errorcolor, alpha=0.4)
+def nplp2Dfig(df, factor1, factor2, ax):
+    dietmsk = df.diet == 'NR'
     
-    return ax
+    a = [[df[factor1][dietmsk], df[factor2][dietmsk]],
+          [df[factor1][~dietmsk], df[factor2][~dietmsk]]]
 
+    x = data2obj2D(a)
+
+    ax, x, _, _ = barscatter(x, paired=True,
+                 barfacecoloroption = 'individual',
+                 barfacecolor = [col['np_cas'], col['np_malt'], col['lp_cas'], col['lp_malt']],
+                 scatteredgecolor = ['xkcd:charcoal'],
+                 scatterlinecolor = 'xkcd:charcoal',
+                 grouplabel=['NR', 'PR'],
+                 scattersize = 60,
+                 ax=ax)
+
+def casVmaltFig(ax, df, factor1, factor2):
+    # prepare data
+    casdata = np.array(df[factor1])
+    maltdata = np.array(df[factor2])
+    xydataAll = []
+    for cas, malt in zip(casdata, maltdata):
+        xydata = []
+        x = np.array([cas[1:], [1]*(len(cas)-1)])
+        y = np.array([malt[1:], [2]*(len(malt)-1)])
+        alllicks = np.concatenate((x,y),axis=1)
+        idx = np.argsort(alllicks[0])
+        sortedlicks = alllicks[:,idx]
+        xydata.append(np.cumsum(np.array(sortedlicks[1,:] == 1, dtype=int)))
+        xydata.append(np.cumsum(np.array(sortedlicks[1,:] != 1, dtype=int)))
+        xydataAll.append(xydata)
+    
+    dietmsk = (df.diet == 'NR')
+    dietmsk = dietmsk[:24]
+    
+    # plot line of unity    
+    ax.plot([0, 5500], [0, 5500], '--', color='xkcd:silver', linewidth=0.5)
+    
+    npdata = [x for i,x in enumerate(xydataAll) if dietmsk[i]]
+    for x in npdata:
+        ax.plot(x[0], x[1], c='xkcd:silver', alpha=0.2, linewidth=1)
+        ax.scatter(x[0][-1], x[1][-1], c='none', edgecolors='xkcd:charcoal')
+    
+    lpdata = [x for i,x in enumerate(xydataAll) if not dietmsk[i]]
+    for x in lpdata:
+        ax.plot(x[0], x[1], c=col['lp_malt'], alpha=0.2, linewidth=1)
+        ax.scatter(x[0][-1], x[1][-1], color='none', edgecolors=col['lp_cas'])
+        
+    max_x = np.max([ax.get_xlim(), ax.get_ylim()])
+    ax.set_xlim([-300, max_x])
+    ax.set_ylim([-300, max_x])
+    
+    return xydataAll
+    
 # Extracts data from metafile
 metafile = 'R:\\DA_and_Reward\\gc214\\IPP1\\IPP1_metafile.txt'
 medfolder = 'R:\\DA_and_Reward\\gc214\\IPP1\\MED-PC datafile\\'
@@ -86,11 +141,6 @@ for row in rows:
     sessionID = row[hrows['rat']] + '-' + row[hrows['session']]
     sessions[sessionID] = Session(row)
     
-#for session in sessions:
-#       x = sessions[session]
-#       if x.session == 's4': # s4 is the first preference test day
-
-
 pref1 = [sessions[x] for x in sessions if sessions[x].session == 's4']
 
 for x in pref1:
@@ -107,12 +157,25 @@ df.insert(2, 'cashist', [x.cas_data['hist'] for x in pref1])
 df.insert(3, 'malthist', [x.malt_data['hist'] for x in pref1])
 df.insert(4, 'caslicks', [x.cas_data['total'] for x in pref1])
 df.insert(5, 'maltlicks', [x.malt_data['total'] for x in pref1])
+df.insert(6, 'caslicks_all', [x.cas_data['licks'] for x in pref1])
+df.insert(7, 'maltlicks_all', [x.malt_data['licks'] for x in pref1])
+
 
 figIPP1a, ax = plt.subplots(nrows=1, ncols=2, sharex='all', sharey=True)
 prefhistFig(ax[0], ax[1], df, 'cashist', 'malthist')
 #figIPP1.text(0.55, 0.04, 'Time (min)', ha='center')
 ax[0].set_ylabel('Licks per 2 min')
 
-#figIPP1b, ax = plt.subplots(1, 1, 1)
+figIPP1b = plt.figure()
+ax = plt.subplot(111)
+nplp2Dfig(df, 'caslicks', 'maltlicks', ax)
+
+figIPP1c = plt.figure(figsize=(4,4))
+ax = plt.subplot(1,1,1)                
+casVmaltFig(ax, df, 'caslicks_all', 'maltlicks_all')
+ax.set_xlabel('Licks for casein')
+ax.set_ylabel('Licks for maltodextrin')
+plt.yticks([0, 2000, 4000, 6000])
+
 
 
