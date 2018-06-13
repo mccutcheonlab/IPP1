@@ -6,7 +6,7 @@ Created on Wed Jun 13 10:16:49 2018
 """
 
 import JM_general_functions as jmf
-
+import pandas as pd
 
 class Session(object):
     
@@ -60,16 +60,24 @@ for row in rows:
     sessionID = row[hrows['rat']] + '-' + row[hrows['session']]
     sessions[sessionID] = Session(row)
     
-for session in sessions:
-       x = sessions[session]
-       if x.session == 's4': # s4 is the first preference test day
-           x.extractlicks()
-           x.calculatelickdata()
+#for session in sessions:
+#       x = sessions[session]
+#       if x.session == 's4': # s4 is the first preference test day
 
-# Puts data in a pandas dataframe for easy access
-           
-df = pd.DataFrame([(rats[x].casein1) for x in sessions])
 
-    df.insert(0,'ratid', [x for x in rats])
-    df.insert(1,'diet', [rats[x].diet for x in rats])
-        
+pref1 = [sessions[x] for x in sessions if sessions[x].session == 's4']
+
+for x in pref1:
+    x.extractlicks()
+    x.calculatelickdata()
+
+# Puts data in a pandas dataframe for easy acces
+
+df = pd.DataFrame()
+    
+df.insert(0, 'rat', [x.rat for x in pref1])
+df.insert(1, 'diet', [x.diet for x in pref1])
+df.insert(2, 'caslicks', [x.cas_data['licks'][1:] for x in pref1])
+df.insert(3, 'malt_licks', [x.malt_data['licks'][1:] for x in pref1])
+
+    
