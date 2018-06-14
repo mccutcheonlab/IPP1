@@ -56,6 +56,29 @@ def sub2var(session, substance):
         varsOut = ['e', 'f']
     return varsOut
 
+def makedataframe(day):
+    
+    subset = [sessions[x] for x in sessions if sessions[x].session == day]
+    
+    for x in subset:
+        x.extractlicks()
+        x.calculatelickdata(interpolate='none')
+    
+    # Puts data in a pandas dataframe for easy acces
+    
+    df = pd.DataFrame()
+        
+    df.insert(0, 'rat', [x.rat for x in subset])
+    df.insert(1, 'diet', [x.diet for x in subset])
+    df.insert(2, 'cashist', [x.cas_data['hist'] for x in subset])
+    df.insert(3, 'malthist', [x.malt_data['hist'] for x in subset])
+    df.insert(4, 'caslicks', [x.cas_data['total'] for x in subset])
+    df.insert(5, 'maltlicks', [x.malt_data['total'] for x in subset])
+    df.insert(6, 'caslicks_all', [x.cas_data['licks'] for x in subset])
+    df.insert(7, 'maltlicks_all', [x.malt_data['licks'] for x in subset])
+    
+    return df
+
 def prefhistFig(ax1, ax2, df, factor1, factor2):
     dietmsk = df.diet == 'NR'
 
@@ -75,9 +98,7 @@ def nplp2Dfig(df, factor1, factor2, ax):
     a = [[df[factor1][dietmsk], df[factor2][dietmsk]],
           [df[factor1][~dietmsk], df[factor2][~dietmsk]]]
 
-    x = data2obj2D(a)
-
-    ax, x, _, _ = barscatter(x, paired=True,
+    ax, x, _, _ = jmfig.barscatter(a, paired=True,
                  barfacecoloroption = 'individual',
                  barfacecolor = [col['np_cas'], col['np_malt'], col['lp_cas'], col['lp_malt']],
                  scatteredgecolor = ['xkcd:charcoal'],
@@ -106,17 +127,17 @@ def casVmaltFig(ax, df, factor1, factor2):
     dietmsk = dietmsk[:24]
     
     # plot line of unity    
-    ax.plot([0, 5500], [0, 5500], '--', color='xkcd:silver', linewidth=0.5)
+    ax.plot([0, 4000], [0, 4000], '--', color='xkcd:silver', linewidth=0.75)
     
     npdata = [x for i,x in enumerate(xydataAll) if dietmsk[i]]
     for x in npdata:
-        ax.plot(x[0], x[1], c='xkcd:silver', alpha=0.2, linewidth=1)
-        ax.scatter(x[0][-1], x[1][-1], c='none', edgecolors='xkcd:charcoal')
+        ax.plot(x[0], x[1], c='xkcd:charcoal', alpha=0.9, linewidth=1)
+        ax.scatter(x[0][-1], x[1][-1], c='white', edgecolors='xkcd:charcoal', zorder=-1)
     
     lpdata = [x for i,x in enumerate(xydataAll) if not dietmsk[i]]
     for x in lpdata:
-        ax.plot(x[0], x[1], c=col['lp_malt'], alpha=0.2, linewidth=1)
-        ax.scatter(x[0][-1], x[1][-1], color='none', edgecolors=col['lp_cas'])
+        ax.plot(x[0], x[1], c='xkcd:kelly green', alpha=0.9, linewidth=1)
+        ax.scatter(x[0][-1], x[1][-1], color='none', edgecolors='xkcd:kelly green')
         
     max_x = np.max([ax.get_xlim(), ax.get_ylim()])
     ax.set_xlim([-300, max_x])
@@ -140,26 +161,10 @@ sessions = {}
 for row in rows:
     sessionID = row[hrows['rat']] + '-' + row[hrows['session']]
     sessions[sessionID] = Session(row)
-    
-pref1 = [sessions[x] for x in sessions if sessions[x].session == 's4']
 
-for x in pref1:
-    x.extractlicks()
-    x.calculatelickdata(interpolate='none')
+## Analysis of first preference day
 
-# Puts data in a pandas dataframe for easy acces
-
-df = pd.DataFrame()
-    
-df.insert(0, 'rat', [x.rat for x in pref1])
-df.insert(1, 'diet', [x.diet for x in pref1])
-df.insert(2, 'cashist', [x.cas_data['hist'] for x in pref1])
-df.insert(3, 'malthist', [x.malt_data['hist'] for x in pref1])
-df.insert(4, 'caslicks', [x.cas_data['total'] for x in pref1])
-df.insert(5, 'maltlicks', [x.malt_data['total'] for x in pref1])
-df.insert(6, 'caslicks_all', [x.cas_data['licks'] for x in pref1])
-df.insert(7, 'maltlicks_all', [x.malt_data['licks'] for x in pref1])
-
+df = makedataframe('s4')
 
 figIPP1a, ax = plt.subplots(nrows=1, ncols=2, sharex='all', sharey=True)
 prefhistFig(ax[0], ax[1], df, 'cashist', 'malthist')
@@ -175,7 +180,8 @@ ax = plt.subplot(1,1,1)
 casVmaltFig(ax, df, 'caslicks_all', 'maltlicks_all')
 ax.set_xlabel('Licks for casein')
 ax.set_ylabel('Licks for maltodextrin')
-plt.yticks([0, 2000, 4000, 6000])
+plt.yticks([0, 2000, 4000])
+plt.xticks([0, 2000, 4000])
 
 
 
