@@ -183,15 +183,15 @@ ax.set_ylabel('Licks for maltodextrin')
 plt.yticks([0, 2000, 4000])
 plt.xticks([0, 2000, 4000])
 
-df = makedataframe('s7')
-
-figIPP1a, ax = plt.subplots(nrows=1, ncols=2, sharex='all', sharey=True)
-prefhistFig(ax[0], ax[1], df, 'cashist', 'malthist')
-#figIPP1.text(0.55, 0.04, 'Time (min)', ha='center')
-ax[0].set_ylabel('Licks per 2 min')
-
-figIPP1b = plt.figure()
-ax = plt.subplot(111)
-nplp2Dfig(df, 'caslicks', 'maltlicks', ax)
+#df = makedataframe('s7')
+#
+#figIPP1a, ax = plt.subplots(nrows=1, ncols=2, sharex='all', sharey=True)
+#prefhistFig(ax[0], ax[1], df, 'cashist', 'malthist')
+##figIPP1.text(0.55, 0.04, 'Time (min)', ha='center')
+#ax[0].set_ylabel('Licks per 2 min')
+#
+#figIPP1b = plt.figure()
+#ax = plt.subplot(111)
+#nplp2Dfig(df, 'caslicks', 'maltlicks', ax)
 
 
