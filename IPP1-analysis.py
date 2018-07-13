@@ -9,6 +9,7 @@ import JM_general_functions as jmf
 import JM_custom_figs as jmfig
 import pandas as pd
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -104,7 +105,7 @@ def nplp2Dfig(df, factor1, factor2, ax):
                  scatteredgecolor = ['xkcd:charcoal'],
                  scatterlinecolor = 'xkcd:charcoal',
                  grouplabel=['NR', 'PR'],
-                 scattersize = 60,
+                 scattersize = 100,
                  ax=ax)
 
 def casVmaltFig(ax, df, factor1, factor2):
@@ -171,9 +172,14 @@ prefhistFig(ax[0], ax[1], df, 'cashist', 'malthist')
 #figIPP1.text(0.55, 0.04, 'Time (min)', ha='center')
 ax[0].set_ylabel('Licks per 2 min')
 
-figIPP1b = plt.figure()
-ax = plt.subplot(111)
+mpl.rcParams['figure.subplot.left'] = 0.25
+figIPP1b, ax = plt.subplots(figsize=(3, 4))
 nplp2Dfig(df, 'caslicks', 'maltlicks', ax)
+ax.set_ylabel('Licks')
+try:
+    figIPP1b.savefig('C:\\Users\\James Rig\\Dropbox\\AbstractsAndTalks\\180718_SSIB_Florida\\figs\\IPP1b.eps')
+except FileNotFoundError:
+    print('File not saved. Cannot find file path.')
 
 figIPP1c = plt.figure(figsize=(4,4))
 ax = plt.subplot(1,1,1)                
