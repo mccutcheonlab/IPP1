@@ -105,7 +105,10 @@ def nplp2Dfig(df, factor1, factor2, ax):
                  scatteredgecolor = ['xkcd:charcoal'],
                  scatterlinecolor = 'xkcd:charcoal',
                  grouplabel=['NR', 'PR'],
-                 scattersize = 100,
+                 grouplabeloffset=0.1,
+                 barlabels=['Cas', 'Malt', 'Cas', 'Malt'],
+                 barlabeloffset=0.025,
+                 scattersize = 80,
                  ax=ax)
 
 def casVmaltFig(ax, df, factor1, factor2):
@@ -147,8 +150,8 @@ def casVmaltFig(ax, df, factor1, factor2):
     return xydataAll
     
 # Extracts data from metafile
-metafile = 'R:\\DA_and_Reward\\gc214\\IPP1\\IPP1_metafile.txt'
-medfolder = 'R:\\DA_and_Reward\\gc214\\IPP1\\MED-PC datafile\\'
+metafile = 'C:\\Users\\jaimeHP\\Documents\\GitHub\\IPP1\\IPP1_metafile.txt'
+medfolder = 'C:\\Users\\jaimeHP\\Downloads\\IPPdatafiles\\'
 
 rows, header = jmf.metafilereader(metafile)
 
@@ -174,10 +177,11 @@ ax[0].set_ylabel('Licks per 2 min')
 
 mpl.rcParams['figure.subplot.left'] = 0.25
 figIPP1b, ax = plt.subplots(figsize=(3, 4))
+figIPP1b.subplots_adjust(left=0.2, bottom=0.15)
 nplp2Dfig(df, 'caslicks', 'maltlicks', ax)
 ax.set_ylabel('Licks')
 try:
-    figIPP1b.savefig('C:\\Users\\James Rig\\Dropbox\\AbstractsAndTalks\\180718_SSIB_Florida\\figs\\IPP1b.eps')
+    figIPP1b.savefig('C:\\Users\\jaimeHP\\Dropbox\\AbstractsAndTalks\\180718_SSIB_Florida\\figs\\IPP1b.eps')
 except FileNotFoundError:
     print('File not saved. Cannot find file path.')
 
